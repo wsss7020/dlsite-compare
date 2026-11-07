@@ -8,7 +8,7 @@
 - [ ] 不含 `results/`、本地索引、收藏／忽略清单、评分和缓存。
 - [ ] 不含自己的本地目录、Windows 用户名或 Kimi Work 专用路径。
 - [ ] Python 与 Node 回归测试通过。
-- [ ] 决定是否添加 LICENSE；没有许可证不等于允许他人自由使用。
+- [x] 已添加 MIT LICENSE，并在 package.json 中标记许可证。
 - [ ] README 中的功能、限制和第三方站点说明符合当前版本。
 
 ## 方法一：使用 Git 命令行（推荐）
