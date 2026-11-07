@@ -1,0 +1,25 @@
+# 个人设置与登录凭据
+config.json
+
+# 本地索引、个人清单、评分与网络缓存
+local_index.json
+scan_cache.json
+editions_cache.json
+translate_info.json
+rj_alias.json
+maker_cache.json
+resource_cache.json
+work_type_cache.json
+global_ignore.json
+global_fav.json
+ratings.json
+ratings_manual.json
+results/
+
+# 运行产生的临时文件
+__pycache__/
+*.py[cod]
+*.tmp
+*.log
+.DS_Store
+Thumbs.db

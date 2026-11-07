@@ -1,0 +1,9 @@
+{
+  "name": "dlsite-compare",
+  "version": "1.0.0",
+  "description": "DLsite 搜索结果与本地 RJ 号比对工具",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  }
+}

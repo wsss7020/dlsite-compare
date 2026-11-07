@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<title>DLsite 收藏比对工具</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --line:#e3e6ea; --text:#1f2329; --sub:#6b7280;
+    --accent:#e8557a; --accent2:#d13d63; --green:#16a34a; --green-bg:#e7f6ec;
+    --red:#dc2626; --red-bg:#fdecec; --amber:#b45309; --amber-bg:#fdf3e3;
+    --gray-bg:#eef0f3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);padding:20px;}
+  .wrap{max-width:1200px;margin:0 auto}
+  h1{font-size:20px;margin-bottom:4px}
+  .sub{color:var(--sub);font-size:13px;margin-bottom:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+  .card h2{font-size:14px;color:var(--sub);margin-bottom:10px;font-weight:600}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input[type=text],input[type=number]{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px}
+  input[type=text]{flex:1;min-width:280px}
+  input[type=number]{width:90px}
+  button{padding:8px 16px;border:none;border-radius:6px;font-size:14px;cursor:pointer;background:var(--accent);color:#fff}
+  button:hover{background:var(--accent2)}
+  button.ghost{background:var(--gray-bg);color:var(--text)}
+  button.ghost:hover{background:#e2e5ea}
+  button.small{padding:3px 10px;font-size:12px;border-radius:5px}
+  button.danger{background:#fff;color:var(--red);border:1px solid var(--red)}
+  button.danger:hover{background:var(--red-bg)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .stat{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:13px;margin-right:8px}
+  .stat.gray{background:var(--gray-bg)}
+  .stat.green{background:var(--green-bg);color:var(--green)}
+  .stat.red{background:var(--red-bg);color:var(--red)}
+  .stat.amber{background:var(--amber-bg);color:var(--amber)}
+  .progress{height:8px;background:var(--gray-bg);border-radius:4px;overflow:hidden;margin:10px 0 6px}
+  .progress>i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+  .msg{font-size:13px;color:var(--sub)}
+  .tabs{display:flex;gap:6px;margin-bottom:10px}
+  .tabs button{background:var(--gray-bg);color:var(--text);padding:6px 14px;font-size:13px}
+  .tabs button.active{background:var(--accent);color:#fff}
+  .pager{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;flex-wrap:wrap}
+  .pager select{padding:4px 6px;border:1px solid var(--line);border-radius:6px;font-size:13px}
+  .pager button{padding:4px 10px;font-size:12px}
+  .pager button.cur{background:var(--accent);color:#fff;border-color:var(--accent)}
+  th.sortable{cursor:pointer;user-select:none}
+  th.sortable:hover{background:#eef1f4}
+  #pageNums{display:inline-flex;gap:4px;align-items:center}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  #resultCard table{table-layout:fixed}
+  #resultCard .title-cell{max-width:none}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:#fafbfc;font-weight:600;color:var(--sub);position:sticky;top:0}
+  .tablebox{max-height:56vh;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;white-space:nowrap}
+  .badge.owned{background:var(--green-bg);color:var(--green)}
+  .badge.missing{background:var(--red-bg);color:var(--red)}
+  .badge.failed{background:var(--amber-bg);color:var(--amber)}
+  .badge.ignored{background:var(--gray-bg);color:var(--sub)}
+  .badge.fav{background:#fde7f0;color:var(--accent2)}
+  .copybtn{border:none;background:none;cursor:pointer;color:#9ca3af;font-size:12px;padding:0 3px;vertical-align:middle}
+  .copybtn:hover{color:var(--accent)}
+  .starbtn{border:none;background:none;cursor:pointer;font-size:16px;padding:0 1px;color:#d1d5db;line-height:1}
+  .starbtn.on{color:#f59e0b}
+  .starbtn:hover{transform:scale(1.2)}
+  .stars{color:#f59e0b;white-space:nowrap}
+  .stars .off{color:#d1d5db}
+  .stars .ratenum{font-size:12px;font-weight:600;margin-right:2px}
+  .starswrap{position:relative;display:inline-block;color:#d1d5db;white-space:nowrap;line-height:1;vertical-align:-1px}
+  .starswrap .fill{position:absolute;top:0;left:0;overflow:hidden;color:#f59e0b;white-space:nowrap}
+  .resline{display:flex;justify-content:space-between;gap:4px;font-size:12px;line-height:1.6;white-space:nowrap}
+  .reslink{color:#64748b;text-decoration:none}
+  .reslink:hover{text-decoration:underline}
+  .reslink.res-found{color:#16a34a;font-weight:600}
+  .res-ok{color:#16a34a;font-weight:700}
+  .res-no{color:#dc2626;font-weight:700}
+  .res-unk{color:#f59e0b;font-weight:700}
+  .mgsec{margin-bottom:16px}
+  .mgsec h3{font-size:13px;margin-bottom:6px;color:var(--text)}
+  .mgsec .tablebox{max-height:30vh}
+  .mgbtn{margin-left:8px}
+  .ed{display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;margin:1px 3px 1px 0;background:var(--gray-bg)}
+  .ed.have{background:var(--green-bg);color:var(--green)}
+  .ed.nothave{background:#f3f4f6;color:#9ca3af}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .title-cell{max-width:400px;word-break:break-all}
+  .muted{color:var(--sub);font-size:12px}
+  details{margin-top:10px}
+  summary{cursor:pointer;font-size:13px;color:var(--sub)}
+  textarea{width:100%;min-height:60px;font-size:13px;padding:8px;border:1px solid var(--line);border-radius:6px;font-family:inherit}
+  .toolbar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+  .rec{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .rec:hover{border-color:#d4d8de}
+  .rec .info{flex:1;min-width:220px}
+  .rec .name{font-weight:600;font-size:14px;margin-bottom:2px}
+  .rec .url{font-size:12px;color:var(--sub);word-break:break-all;max-width:640px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rec .meta{font-size:12px;color:var(--sub);margin-top:2px}
+  .rec .actions{display:flex;gap:6px}
+  .norec{color:var(--sub);font-size:13px;padding:14px;text-align:center;border:1px dashed var(--line);border-radius:8px}
+  #newForm{display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DLsite 收藏比对工具</h1>
+  <div class="sub">把 DLsite 搜索结果和本地文件夹比对，按 RJ 号（含多语言版本归并）找出还没下载的作品</div>
+
+  <div class="card">
+    <h2>本地库</h2>
+    <div class="row">
+      <span id="localStat" class="stat gray">加载中…</span>
+      <span id="aliasStat" class="stat gray" style="display:none"></span>
+      <button class="ghost small" id="btnExportLocal" title="导出本地库全部作品信息（RJ号/标题/社团/发售日/语言版本/链接/本地目录）">导出本地库 CSV</button>
+      <span class="muted">每次比对会自动重新扫描目录并更新翻译版对照</span>
+    </div>
+    <details>
+      <summary>目录与代理设置</summary>
+      <div style="margin-top:8px">
+        <div class="muted" style="margin-bottom:4px">本地目录（每行一个）：</div>
+        <textarea id="cfgDirs"></textarea>
+        <div class="muted" style="margin:8px 0 4px">代理（auto = 自动检测，none = 直连，或填 http://127.0.0.1:7897）：</div>
+        <input type="text" id="cfgProxy" style="width:260px;flex:none">
+        <div class="muted" style="margin:8px 0 4px">DLsite Cookie（可选，比对收藏夹等需要登录的页面时填写；只保存在本机，仅发送给 dlsite.com）：</div>
+        <input type="text" id="cfgCookie" style="width:100%;flex:none" placeholder="粘贴请求头中 Cookie: 后面的完整值">
+        <details id="cookieHelp" style="margin-top:6px">
+          <summary>如何获取 DLsite Cookie？（点击查看分步说明）</summary>
+          <ol class="muted" style="margin:6px 0 0 20px;line-height:1.7">
+            <li>在 Chrome / Edge 等浏览器中登录 DLsite，并打开你的收藏夹页面。</li>
+            <li>按 <strong>F12</strong> 打开开发者工具，切换到「网络 / Network」标签。</li>
+            <li>按 <strong>F5</strong> 刷新页面，在请求列表中点击任意一个 <strong>dlsite.com</strong> 请求。</li>
+            <li>在右侧「标头 / Headers」→「请求标头 / Request Headers」中找到 <strong>Cookie:</strong>。</li>
+            <li>复制 <strong>Cookie: 后面的完整值</strong>（不要包含“Cookie:”本身），粘贴到上方输入框，再点击「保存设置」。</li>
+          </ol>
+          <div class="muted" style="margin-top:6px">Cookie 相当于登录凭据，请勿发给他人或截图公开。</div>
+        </details>
+        <div style="margin-top:8px">
+          <button class="ghost" id="btnSaveCfg">保存设置</button>
+          <span id="cfgMsg" class="muted" style="margin-left:8px"></span>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>比对记录</h2>
+    <div class="row" style="margin-bottom:10px">
+      <button id="btnNew">＋ 新建比对</button>
+      <button class="ghost" id="btnCancel" disabled>取消进行中的任务</button>
+    </div>
+    <div id="newForm">
+      <div class="row">
+        <input type="text" id="inpUrl" placeholder="粘贴 DLsite 搜索结果页的网址（在 DLsite 搜索后，复制浏览器地址栏的链接）">
+        <input type="number" id="inpPages" min="0" value="0" title="最多抓取页数，0 = 全部">
+        <button id="btnStart">开始比对</button>
+      </div>
+      <div class="muted" style="margin-top:6px">最多抓取页数填 0 表示抓全部结果页；每页 100 部作品。</div>
+    </div>
+    <div class="progress" id="progBox" style="display:none"><i id="progBar"></i></div>
+    <div class="msg" id="jobMsg"></div>
+    <div id="recList" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card" id="libCard">
+    <h2>本地库</h2>
+    <div class="toolbar">
+      <span id="libStat" class="stat gray" style="display:none"></span>
+      <input type="text" id="libFilter" placeholder="筛选 RJ号 / 标题 / 社团" style="display:none;width:220px;flex:none">
+      <select id="libRateFilter" style="display:none;flex:none" title="按评级筛选（4.5 分以上每 0.1 分一档）">
+        <option value="">全部评级</option>
+        <option value="rated">只看已评价</option>
+        <option value="unrated">只看未评价</option>
+        <option value="eq5">满分 5.00</option>
+        <option value="t490">4.90 - 4.99</option>
+        <option value="t480">4.80 - 4.89</option>
+        <option value="t470">4.70 - 4.79</option>
+        <option value="t460">4.60 - 4.69</option>
+        <option value="t450">4.50 - 4.59</option>
+        <option value="t400">4.00 - 4.49</option>
+        <option value="t350">3.50 - 3.99</option>
+        <option value="t300">3.00 - 3.49</option>
+        <option value="lt3">3.00 以下</option>
+      </select>
+      <span style="flex:1"></span>
+      <button class="ghost small" id="btnLibLoad">打开本地库</button>
+      <button class="ghost small" id="btnLibImport" style="display:none" title="从 DLsite 批量获取/更新本地库作品的官方评分（两位小数），并沿用语言版本的评分；你手动打过分的作品不会被改动">导入 DLsite 评分</button>
+      <button class="ghost small" id="btnLibRefresh" style="display:none" title="联网补全社团/发售日等信息后重新加载（较慢）">联网补全刷新</button>
+    </div>
+    <div class="tablebox" id="libBox" style="display:none">
+      <table>
+        <thead><tr>
+          <th class="sortable" data-k="rj" style="width:120px">RJ号</th>
+          <th class="sortable" data-k="title">标题</th>
+          <th class="sortable" data-k="maker" style="width:130px">社团</th>
+          <th class="sortable" data-k="release_date" style="width:90px">发售</th>
+          <th class="sortable" data-k="mtime" style="width:110px">下载时间</th>
+          <th class="sortable" data-k="rating" style="width:100px">评级</th>
+          <th style="width:60px">链接</th>
+          <th style="width:200px">目录</th>
+        </tr></thead>
+        <tbody id="libTbody"></tbody>
+      </table>
+    </div>
+    <div class="pager" id="libPager" style="display:none">
+      <label class="muted">每页
+        <select id="libPerPage">
+          <option>20</option><option>30</option><option>40</option>
+          <option>50</option><option>100</option><option>500</option>
+          <option>1000</option>
+        </select> 条</label>
+      <span class="muted" id="libPageInfo"></span>
+      <span style="flex:1"></span>
+      <button class="ghost" id="libPrev">上一页</button>
+      <span id="libPageNums"></span>
+      <button class="ghost" id="libNext">下一页</button>
+    </div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none">
+    <h2 id="resultTitle">比对结果</h2>
+    <div class="toolbar">
+      <span id="sumTotal" class="stat gray"></span>
+      <span id="sumOwned" class="stat green"></span>
+      <span id="sumMissing" class="stat red"></span>
+      <span id="sumFav" class="stat" style="background:#fde7f0;color:var(--accent2)"></span>
+      <span id="sumIgnored" class="stat gray"></span>
+      <span id="sumFailed" class="stat amber" style="display:none"></span>
+      <span style="flex:1"></span>
+      <button class="ghost small" id="btnRefreshRec">刷新此结果</button>
+      <button class="ghost small" id="btnResBatch" title="批量检测本结果中未下载和收藏的作品在三个资源站的情况（所有语言版本 RJ 都查，结果会缓存；已下载和忽略的不查，需要的话用 RJ 号下的单查按钮）">批量检测资源</button>
+      <button class="ghost small" id="btnResCancel" style="display:none">取消检测</button>
+      <button class="ghost small" id="btnCsv">导出未下载 CSV</button>
+      <button class="ghost small" id="btnCsvFav">导出收藏 CSV</button>
+      <button class="ghost small" id="btnCsvIgn">导出忽略 CSV</button>
+      <button class="ghost small" id="btnCopy">复制未下载 RJ 号</button>
+    </div>
+    <div class="tabs">
+      <button data-f="missing" class="active">未下载</button>
+      <button data-f="owned">已下载</button>
+      <button data-f="favorited">收藏</button>
+      <button data-f="ignored">忽略</button>
+      <button data-f="all">全部</button>
+      <label class="muted" style="font-size:12px;display:inline-flex;align-items:center;gap:4px;margin-left:10px;cursor:pointer" title="只显示在 alist-public / anime-sharing / asmr.one 至少一站检测到资源的作品（需先检测）"><input type="checkbox" id="resOnly"> 只看有资源</label>
+    </div>
+    <div class="tablebox">
+      <table>
+        <thead><tr>
+          <th class="sortable" data-k="rj" style="width:120px">RJ号</th>
+          <th class="sortable" data-k="title">标题</th>
+          <th class="sortable" data-k="maker" style="width:100px">社团</th>
+          <th class="sortable" data-k="release_date" style="width:90px">发售</th>
+          <th style="width:150px">语言版本</th><th style="width:130px">资源</th><th style="width:110px">状态</th>
+          <th style="width:60px">链接</th><th style="width:90px">操作</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <label class="muted">每页
+        <select id="perPage">
+          <option>20</option><option>30</option><option>40</option>
+          <option>50</option><option>100</option><option>500</option>
+          <option>1000</option>
+        </select> 条</label>
+      <span class="muted" id="pageInfo"></span>
+      <span style="flex:1"></span>
+      <button class="ghost" id="btnPrev">上一页</button>
+      <span id="pageNums"></span>
+      <button class="ghost" id="btnNext">下一页</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>忽略与收藏管理</h2>
+    <div class="row" style="margin-bottom:10px">
+      <button class="ghost" id="btnManage">打开管理</button>
+      <span class="muted">忽略和收藏在所有比对记录间全局共享</span>
+    </div>
+    <div id="manageBox" style="display:none">
+      <div class="mgsec">
+        <h3>已忽略的作品（<span id="mgIgnoredN">0</span>）
+          <button class="ghost small mgbtn" onclick="restoreChecked('ignored')">批量恢复</button>
+          <button class="ghost small mgbtn" onclick="exportList('ignored')">导出 CSV</button>
+        </h3>
+        <div class="tablebox"><table>
+          <thead><tr><th style="width:34px"><input type="checkbox" onclick="checkAll(this,'ignored')"></th>
+          <th style="width:110px">RJ号</th><th>标题</th><th style="width:150px">社团</th><th style="width:70px">操作</th></tr></thead>
+          <tbody id="mgIgnored"></tbody>
+        </table></div>
+      </div>
+      <div class="mgsec">
+        <h3>已忽略的社团（<span id="mgMakersN">0</span>）
+          <button class="ghost small mgbtn" onclick="restoreChecked('ignored_makers')">批量恢复</button>
+          <button class="ghost small mgbtn" onclick="exportList('ignored_makers')">导出 CSV</button>
+        </h3>
+        <div class="tablebox"><table>
+          <thead><tr><th style="width:34px"><input type="checkbox" onclick="checkAll(this,'ignored_makers')"></th>
+          <th>社团名</th><th style="width:70px">操作</th></tr></thead>
+          <tbody id="mgMakers"></tbody>
+        </table></div>
+      </div>
+      <div class="mgsec">
+        <h3>已收藏的作品（<span id="mgFavN">0</span>）
+          <button class="ghost small mgbtn" onclick="restoreChecked('favorites')">批量取消收藏</button>
+          <button class="ghost small mgbtn" onclick="exportList('favorites')">导出 CSV</button>
+        </h3>
+        <div class="tablebox"><table>
+          <thead><tr><th style="width:34px"><input type="checkbox" onclick="checkAll(this,'favorites')"></th>
+          <th style="width:110px">RJ号</th><th>标题</th><th style="width:150px">社团</th><th style="width:90px">操作</th></tr></thead>
+          <tbody id="mgFav"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let RESULT = null, FILTER = 'missing', POLL = null, RECORDS = [];
+let PAGE = 1, PER_PAGE = parseInt(localStorage.getItem('perPage') || '20', 10);
+if(![20,30,40,50,100,500,1000].includes(PER_PAGE)) PER_PAGE = 20;
+let SORT_KEY = null, SORT_DIR = 1;  // 排序：null = 搜索结果原始顺序
+
+async function api(path, body){
+  const opt = body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)};
+  const r = await fetch(path, opt);
+  return r.json();
+}
+
+function esc(s){return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+// 拼进 onclick 单引号字符串用的编码：encodeURIComponent 不会编码单引号，需额外替换
+function ue(s){return encodeURIComponent(s||'').replace(/'/g,'%27');}
+
+async function refreshState(){
+  const st = await api('/api/state');
+  if(st.local){
+    document.getElementById('localStat').textContent =
+      `本地共 ${st.local.count} 个 RJ 号 · 扫描于 ${st.local.scanned_at}`;
+  }else{
+    document.getElementById('localStat').textContent = '尚未扫描本地目录（首次比对时会自动扫描）';
+  }
+  const as = document.getElementById('aliasStat');
+  if(st.alias_count){ as.style.display='inline-flex'; as.textContent = `翻译版对照 ${st.alias_count} 条`; }
+  else { as.style.display='none'; }
+  document.getElementById('cfgDirs').value = (st.config.local_dirs||[]).join('\n');
+  document.getElementById('cfgProxy').value = st.config.proxy || 'auto';
+  document.getElementById('cfgCookie').value = st.config.cookie || '';
+  RECORDS = st.records || [];
+  renderRecords();
+  if(st.job && st.job.state === 'running'){ watchJob(); }
+}
+
+function renderRecords(){
+  const box = document.getElementById('recList');
+  if(!RECORDS.length){
+    box.innerHTML = '<div class="norec">还没有保存的比对结果，点「＋ 新建比对」开始</div>';
+    return;
+  }
+  box.innerHTML = RECORDS.map(r=>{
+    const s = r.summary || {};
+    return `<div class="rec">
+      <div class="info">
+        <div class="name" id="recname-${r.id}">${esc(r.name || r.id)}</div>
+        <div style="display:flex;align-items:center;gap:6px;min-width:0">
+          <div class="url" style="flex:1;min-width:0">${esc(r.url)}</div>
+          <button class="small ghost" style="flex:none;padding:2px 8px;font-size:11px" title="复制这条比对的 DLsite 搜索结果链接" onclick="copyText(decodeURIComponent('${ue(r.url||'')}'), this)">复制链接</button>
+        </div>
+        <div class="meta">更新于 ${esc(r.updated_at||'')} · 共 ${s.total??'?'} 部 · 已下载 ${s.owned??'?'} · 未下载 ${s.missing??'?'} · 忽略 ${s.ignored??0}</div>
+      </div>
+      <div class="actions">
+        <button class="small" onclick="openRecord('${r.id}')">打开</button>
+        <button class="small ghost" onclick="startRename('${r.id}')">重命名</button>
+        <button class="small ghost" onclick="refreshRecord('${r.id}')">刷新</button>
+        <button class="small danger" onclick="deleteRecord('${r.id}')">删除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openRecord(id){
+  const rec = await api('/api/result?id=' + encodeURIComponent(id));
+  if(rec.error){ alert(rec.error); return; }
+  RESULT = rec;
+  PAGE = 1;
+  renderResult();
+  document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
+}
+
+async function openFolder(path){
+  try{
+    const r = await api('/api/open_folder', {path});
+    if(!r.ok) alert(r.error || '打开失败');
+  }catch(e){ alert('打开失败：' + e.message); }
+}
+
+async function recheckItem(rj, btn){
+  if(!RESULT) return;
+  btn.disabled = true; btn.textContent = '检测中…';
+  let r;
+  try{ r = await api('/api/recheck', {id: RESULT.id, rj}); }
+  catch(e){ alert('检测失败：' + e.message); btn.disabled = false; btn.textContent = '检测本地'; return; }
+  if(!r.ok){ alert(r.error || '检测失败'); btn.disabled = false; btn.textContent = '检测本地'; return; }
+  const i = RESULT.items.findIndex(x => x.rj === rj);
+  // 只合并本地检测更新的字段，保留 /api/result 注入的 resources、rating 等响应专用字段。
+  // 整项替换会丢掉 resources，导致「收藏 + 只看有资源」里的未下载条目检测后立即被筛掉。
+  if(i >= 0) RESULT.items[i] = {...RESULT.items[i], ...r.item};
+  // 检测为已下载时服务端会自动脱离全局收藏；同步数组，避免后续操作按旧数组回写。
+  if(r.ignored) RESULT.ignored = r.ignored;
+  if(r.ignored_makers) RESULT.ignored_makers = r.ignored_makers;
+  if(r.favorites) RESULT.favorites = r.favorites;
+  recomputeIgnoredFlags();
+  if(r.summary) RESULT.summary = r.summary;
+  renderSummary();
+  renderTable();
+  refreshState();
+}
+
+function startRename(rid){
+  const el = document.getElementById('recname-' + rid);
+  if(!el) return;
+  const cur = el.textContent;
+  el.innerHTML = `<input type="text" id="renameinp-${rid}" value="${esc(cur)}" style="width:60%;max-width:360px">` +
+    ` <button class="small" onclick="doRename('${rid}')">确定</button>` +
+    ` <button class="small ghost" onclick="renderRecords()">取消</button>`;
+  const inp = document.getElementById('renameinp-' + rid);
+  inp.focus(); inp.select();
+  inp.onkeydown = e=>{
+    if(e.key === 'Enter') doRename(rid);
+    if(e.key === 'Escape') renderRecords();
+  };
+}
+
+async function doRename(rid){
+  const inp = document.getElementById('renameinp-' + rid);
+  const name = (inp.value || '').trim();
+  if(!name){ alert('名称不能为空'); return; }
+  const r = await api('/api/rename', {id: rid, name});
+  if(!r.ok){ alert(r.error || '重命名失败'); return; }
+  if(RESULT && RESULT.id === rid){ RESULT.name = name; renderResult(); }
+  refreshState();
+}
+
+async function refreshRecord(id){
+  const r = await api('/api/refresh', {id});
+  if(!r.ok){ alert(r.error || '启动失败'); return; }
+  watchJob();
+}
+
+async function deleteRecord(id){
+  if(!confirm('确定删除这条比对记录吗？')) return;
+  await api('/api/delete', {id});
+  if(RESULT && RESULT.id === id){
+    RESULT = null;
+    document.getElementById('resultCard').style.display = 'none';
+  }
+  refreshState();
+}
+
+document.getElementById('btnExportLocal').onclick = async (e)=>{
+  const btn = e.target;
+  btn.disabled = true;
+  btn.textContent = '生成中（首次需补查发售日，请稍候）…';
+  try{
+    const r = await fetch('/api/export_local');
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const blob = await r.blob();
+    const cd = r.headers.get('Content-Disposition') || '';
+    const m = cd.match(/filename="([^"]+)"/);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = m ? m[1] : 'dlsite_local.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }catch(err){ alert('导出失败：' + err.message); }
+  btn.disabled = false;
+  btn.textContent = '导出本地库 CSV';
+};
+
+document.getElementById('btnSaveCfg').onclick = async ()=>{
+  const dirs = document.getElementById('cfgDirs').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const proxy = document.getElementById('cfgProxy').value.trim() || 'auto';
+  const cookie = document.getElementById('cfgCookie').value.trim();
+  const r = await api('/api/config', {local_dirs: dirs, proxy, cookie});
+  document.getElementById('cfgMsg').textContent = r.ok ? '已保存' : ('保存失败：' + (r.error||''));
+  setTimeout(()=>document.getElementById('cfgMsg').textContent='', 3000);
+};
+
+document.getElementById('btnNew').onclick = ()=>{
+  const f = document.getElementById('newForm');
+  f.style.display = f.style.display === 'none' || !f.style.display ? 'block' : 'none';
+};
+
+document.getElementById('btnStart').onclick = async ()=>{
+  const url = document.getElementById('inpUrl').value.trim();
+  if(!url){ alert('请先粘贴 DLsite 搜索结果网址'); return; }
+  const max_pages = parseInt(document.getElementById('inpPages').value || '0', 10);
+  const r = await api('/api/compare', {url, max_pages});
+  if(!r.ok){ alert(r.error || '启动失败'); return; }
+  watchJob();
+};
+
+document.getElementById('btnRefreshRec').onclick = async ()=>{
+  if(!RESULT) return;
+  refreshRecord(RESULT.id);
+};
+
+document.getElementById('btnCancel').onclick = async ()=>{ await api('/api/cancel', {}); };
+
+function watchJob(){
+  document.getElementById('btnStart').disabled = true;
+  document.getElementById('btnNew').disabled = true;
+  document.getElementById('btnCancel').disabled = false;
+  document.getElementById('progBox').style.display = 'block';
+  pollJob();
+}
+
+async function pollJob(){
+  const j = await api('/api/job');
+  document.getElementById('jobMsg').textContent = j.message || '';
+  if(j.phase_total > 0){
+    document.getElementById('progBar').style.width = Math.round(100 * j.phase_done / j.phase_total) + '%';
+  }
+  if(j.state === 'running'){ POLL = setTimeout(pollJob, 800); return; }
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnNew').disabled = false;
+  document.getElementById('btnCancel').disabled = true;
+  if(j.state === 'done' && j.record_id){
+    await refreshState();
+    openRecord(j.record_id);
+  }
+  if(j.state === 'error'){ alert('比对出错：' + j.error); }
+  if(j.state === 'cancelled'){ document.getElementById('jobMsg').textContent = '已取消'; }
+}
+
+function aliasRev(){
+  const rev = {};
+  const a = (RESULT && RESULT.alias) || {};
+  for(const [t, m] of Object.entries(a)){ (rev[m] = rev[m] || []).push(t); }
+  return rev;
+}
+
+function editionsHtml(it){
+  const rev = aliasRev();
+  const matched = it.matched || [];
+  if(!it.editions || !it.editions.length){
+    const trans = rev[it.rj] || [];
+    const transNote = trans.length ? `（翻译站 ${trans.join('、')}）` : '';
+    const tip = trans.length ? `${it.rj} / 翻译站 ${trans.join('、')}` : it.rj;
+    return `<span class="ed ${it.status==='owned'?'have':'nothave'}" title="${esc(tip)}">${esc(it.rj)}${esc(transNote)}</span>`;
+  }
+  return it.editions.map(e=>{
+    const trans = rev[e.workno] || [];
+    const have = matched.includes(e.workno) || trans.some(t=>matched.includes(t));
+    const label = e.display_label ? `${e.display_label} ` : '';
+    const transNote = trans.length ? `（翻译站 ${trans.join('、')}）` : '';
+    const tip = trans.length ? `${e.workno} / 翻译站 ${trans.join('、')}` : e.workno;
+    return `<span class="ed ${have?'have':'nothave'}" title="${esc(tip)}">${esc(label)}${esc(e.workno)}${esc(transNote)}</span>`;
+  }).join('');
+}
+
+function ignoredByMaker(it){
+  return !!it.ignored && !!it.maker && (RESULT.ignored_makers||[]).includes(it.maker);
+}
+
+const RES_SITES = [
+  {key:'alist', name:'alist-public', search:'https://alist-public.imoutoheaven.org/'},
+  {key:'animesharing', name:'anime-sharing', search:'https://www.anime-sharing.com/search/?q='},
+  {key:'asmrone', name:'asmr.one', search:'https://www.asmr.one/works?keyword='},
+];
+
+function resCell(it){
+  const res = it.resources || {};
+  const lines = RES_SITES.map(s=>{
+    const r = res[s.key];
+    const url = (r && r.u) || (s.search + it.rj);
+    let icon = '<span style="color:#c4c9d4" title="未检测">·</span>';
+    let cls = 'reslink';
+    if(r){
+      if(r.f === true){ icon = '<span class="res-ok">✓</span>'; cls += ' res-found'; }
+      else if(r.f === false){ icon = '<span class="res-no">✗</span>'; }
+      else icon = '<span class="res-unk" title="检测失败或需人工验证（点链接自行搜索）">?</span>';
+    }
+    const via = r && r.via && r.via !== it.rj ? `（命中版本 ${r.via}）` : '';
+    return `<div class="resline"><a class="${cls}" href="${esc(url)}" target="_blank" title="${s.name} 搜索 ${it.rj}${via}">${s.name}</a>${icon}</div>`;
+  }).join('');
+  const recheck = Object.keys(res).length ? `<div style="margin-top:2px"><button class="small ghost" style="padding:1px 6px;font-size:10px" title="忽略缓存，重新联网检测" onclick="rescheckItem('${it.rj}', this, true)">重查</button></div>` : '';
+  return lines + recheck;
+}
+
+async function rescheckItem(rj, btn, force){
+  btn.disabled = true; btn.textContent = force ? '重查中…' : '检测中…';
+  try{
+    const r = await api('/api/rescheck', {id: RESULT.id, rj, force: !!force});
+    if(!r.ok){ alert(r.error || '检测失败'); }
+    else{
+      const it = RESULT.items.find(x=>x.rj===rj);
+      if(it) it.resources = r.resources;
+      renderTable();
+    }
+  }catch(e){ alert('检测失败：无法连接服务，请确认服务已启动。'); }
+  btn.disabled = false; btn.textContent = force ? '重查' : '检测资源';
+}
+
+function statusBadge(it){
+  if(it.ignored){
+    const why = ignoredByMaker(it) ? '社团已忽略' : '已忽略';
+    return `<span class="badge ignored">${why}</span>`;
+  }
+  if(it.favorited) return '<span class="badge fav">已收藏</span>';
+  if(it.status === 'owned'){
+    const via = (it.matched||[]).filter(m=>m!==it.rj);
+    const alias = (RESULT && RESULT.alias) || {};
+    const viaTxt = via.map(m => alias[m] ? `${m}（翻译站）` : m).join('、');
+    const extra = via.length ? `<div class="muted">匹配到本地版本：${esc(viaTxt)}</div>` : '';
+    const rt = it.rating || 0;
+    const rateDiv = rt ? `<div class="stars" title="${it.rating_manual ? '我的评级' : 'DLsite 评分'}：${Number(rt).toFixed(2)} 星" style="margin-top:2px"><span class="ratenum">${Number(rt).toFixed(2)}</span>${starsFillHtml(rt)}</div>` : '';
+    const path = (it.local_paths||[])[0];
+    const pathDiv = path ? `<div class="muted" title="${esc(path)}" style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(path)}</div><div><button class="small ghost" style="margin-top:4px;padding:2px 8px;font-size:11px" title="在资源管理器中打开所在文件夹" onclick="openFolder(decodeURIComponent('${ue(path)}'))">打开文件夹</button></div>` : '';
+    return `<span class="badge owned">已下载</span>${rateDiv}${extra}${pathDiv}`;
+  }
+  if(it.status === 'missing') return '<span class="badge missing">未下载</span>';
+  return `<span class="badge failed">检查失败</span><div class="muted">${esc(it.error_msg||'')}</div>`;
+}
+
+function actionBtn(it){
+  if(it.ignored){
+    if(ignoredByMaker(it) && !((RESULT.ignored||[]).includes(it.rj))){
+      return `<button class="small ghost" onclick="toggleMaker('${ue(it.maker)}', false)">恢复社团</button>`;
+    }
+    return `<button class="small ghost" onclick="toggleIgnore('${it.rj}', false)">恢复</button>`;
+  }
+  if(it.favorited){
+    return `<button class="small ghost" onclick="toggleFavorite('${it.rj}', false)">取消收藏</button>`;
+  }
+  if(it.status !== 'missing') return '';
+  return `<button class="small ghost" onclick="toggleIgnore('${it.rj}', true)">忽略</button>` +
+         `<button class="small ghost" style="margin-left:4px" onclick="toggleFavorite('${it.rj}', true)">收藏</button>`;
+}
+
+function makerCell(it){
+  if(!it.maker) return '';
+  let btn = '';
+  if(it.status === 'missing' && !it.ignored && !it.favorited){
+    btn = `<button class="small ghost" style="margin-top:4px" title="忽略该社团的全部作品" onclick="toggleMaker('${ue(it.maker)}', true)">忽略社团</button>`;
+  }
+  return `<div>${esc(it.maker)}</div>${btn}`;
+}
+
+function recomputeIgnoredFlags(){
+  const ig = RESULT.ignored || [], igm = RESULT.ignored_makers || [], fv = RESULT.favorites || [];
+  RESULT.items.forEach(it=>{
+    it.ignored = ig.includes(it.rj) || !!(it.maker && igm.includes(it.maker));
+    it.favorited = fv.includes(it.rj);
+  });
+}
+
+async function toggleIgnore(rj, flag){
+  if(!RESULT) return;
+  const r = await api('/api/ignore', {id: RESULT.id, rj, ignored: flag});
+  if(!r.ok){ alert(r.error || '操作失败'); return; }
+  if(r.ignored) RESULT.ignored = r.ignored;
+  if(r.ignored_makers) RESULT.ignored_makers = r.ignored_makers;
+  if(r.summary) RESULT.summary = r.summary;
+  recomputeIgnoredFlags();
+  renderSummary();
+  renderTable();
+  refreshState();
+}
+
+async function toggleMaker(makerEnc, flag){
+  if(!RESULT) return;
+  const maker = decodeURIComponent(makerEnc);
+  const n = RESULT.items.filter(it=>it.maker===maker && it.status==='missing' && !it.ignored).length;
+  if(flag && !confirm(`确定忽略社团「${maker}」吗？其 ${n} 部未下载作品将移入忽略标签。`)) return;
+  const r = await api('/api/ignore_maker', {id: RESULT.id, maker, ignored: flag});
+  if(!r.ok){ alert(r.error || '操作失败'); return; }
+  if(r.ignored_makers) RESULT.ignored_makers = r.ignored_makers;
+  if(r.summary) RESULT.summary = r.summary;
+  recomputeIgnoredFlags();
+  renderSummary();
+  renderTable();
+  refreshState();
+}
+
+async function toggleFavorite(rj, flag){
+  if(!RESULT) return;
+  const r = await api('/api/favorite', {id: RESULT.id, rj, favorited: flag});
+  if(!r.ok){ alert(r.error || '操作失败'); return; }
+  if(r.favorites) RESULT.favorites = r.favorites;
+  if(r.summary) RESULT.summary = r.summary;
+  recomputeIgnoredFlags();
+  renderSummary();
+  renderTable();
+  refreshState();
+}
+
+async function copyText(txt, btn){
+  try{ await navigator.clipboard.writeText(txt); }
+  catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  }
+  if(btn){ const old = btn.textContent; btn.textContent = '✓'; setTimeout(()=>btn.textContent = old, 1000); }
+}
+
+function renderSummary(){
+  const s = RESULT.summary;
+  document.getElementById('sumTotal').textContent = `共 ${s.total} 部作品`;
+  document.getElementById('sumOwned').textContent = `已下载 ${s.owned}`;
+  document.getElementById('sumMissing').textContent = `未下载 ${s.missing}`;
+  document.getElementById('sumFav').textContent = `收藏 ${s.favorited || 0}`;
+  document.getElementById('sumIgnored').textContent = `忽略 ${s.ignored || 0}`;
+  const fe = document.getElementById('sumFailed');
+  if(s.check_failed){ fe.style.display = 'inline-flex'; fe.textContent = `检查失败 ${s.check_failed}`; }
+  else fe.style.display = 'none';
+}
+
+function renderResult(){
+  document.getElementById('resultCard').style.display = 'block';
+  document.getElementById('resultTitle').textContent =
+    '比对结果：' + (RESULT.name || RESULT.id) + '（更新于 ' + (RESULT.updated_at||'') + '）';
+  renderSummary();
+  renderTable();
+}
+
+let RES_ONLY = false;  // 只看有资源
+
+function hasResource(it){
+  return !!(it.resources && Object.values(it.resources).some(r=>r.f === true));
+}
+
+function matchFilter(it){
+  if(RES_ONLY && !hasResource(it)) return false;
+  if(FILTER === 'all') return true;
+  if(FILTER === 'ignored') return !!it.ignored;
+  if(FILTER === 'favorited') return !!it.favorited && !it.ignored;
+  if(FILTER === 'missing') return it.status === 'missing' && !it.ignored && !it.favorited;
+  return it.status === FILTER && !it.ignored;
+}
+
+function sortItems(items){
+  if(!SORT_KEY) return items;
+  const k = SORT_KEY, d = SORT_DIR;
+  const val = it => k === 'rj' ? parseInt(it.rj.slice(2), 10) || 0 : (it[k] || '');
+  return [...items].sort((a, b)=>{
+    const va = val(a), vb = val(b);
+    if(typeof va === 'number' && typeof vb === 'number') return (va - vb) * d;
+    return String(va).localeCompare(String(vb), 'zh-Hans-CN', {numeric: true}) * d;
+  });
+}
+
+function updateSortIndicators(){
+  document.querySelectorAll('#resultCard th.sortable').forEach(th=>{
+    if(!th.dataset.label) th.dataset.label = th.textContent;
+    th.textContent = th.dataset.label +
+      (SORT_KEY === th.dataset.k ? (SORT_DIR === 1 ? ' ↑' : ' ↓') : '');
+    th.title = SORT_KEY === th.dataset.k
+      ? (SORT_DIR === 1 ? '正序 · 点击改为倒序' : '倒序 · 点击恢复默认顺序')
+      : '点击排序';
+  });
+}
+
+document.querySelectorAll('#resultCard th.sortable').forEach(th=>{
+  th.onclick = ()=>{
+    const k = th.dataset.k;
+    if(SORT_KEY !== k){ SORT_KEY = k; SORT_DIR = 1; }
+    else if(SORT_DIR === 1){ SORT_DIR = -1; }
+    else { SORT_KEY = null; SORT_DIR = 1; }  // 第三次点击恢复默认顺序
+    PAGE = 1;
+    renderTable();
+  };
+});
+
+function renderTable(){
+  const tb = document.getElementById('tbody');
+  const items = sortItems(RESULT.items.filter(matchFilter));
+  updateSortIndicators();
+  const totalPages = Math.max(1, Math.ceil(items.length / PER_PAGE));
+  if(PAGE > totalPages) PAGE = totalPages;
+  if(PAGE < 1) PAGE = 1;
+  const slice = items.slice((PAGE-1)*PER_PAGE, PAGE*PER_PAGE);
+  tb.innerHTML = slice.map(it=>`<tr>
+    <td>${esc(it.rj)}<button class="copybtn" title="复制 RJ 号" onclick="copyText('${it.rj}', this)">⧉</button>${it.status!=='owned' ? `<div><button class="small ghost" style="margin-top:4px;padding:2px 8px;font-size:11px" title="重新扫描本地库，单独检测这个作品是否已下载" onclick="recheckItem('${it.rj}', this)">检测本地</button></div>` : ''}<div><button class="small ghost" style="margin-top:4px;padding:2px 8px;font-size:11px" title="在 alist-public / anime-sharing / asmr.one 检测这个作品（所有语言版本 RJ 都查）" onclick="rescheckItem('${it.rj}', this)">检测资源</button></div></td>
+    <td class="title-cell">${esc(it.title)}<button class="copybtn" title="复制标题" onclick="copyText(decodeURIComponent('${ue(it.title||'')}'), this)">⧉</button></td>
+    <td>${makerCell(it)}</td>
+    <td class="muted" style="white-space:nowrap">${esc(it.release_date||'')}</td>
+    <td>${editionsHtml(it)}</td>
+    <td>${resCell(it)}</td>
+    <td>${statusBadge(it)}</td>
+    <td><a href="${esc(it.url)}" target="_blank">打开</a></td>
+    <td>${actionBtn(it)}</td>
+  </tr>`).join('') || '<tr><td colspan="9" class="muted" style="padding:20px;text-align:center">没有符合筛选条件的作品</td></tr>';
+  renderPager(items.length, totalPages);
+}
+
+function renderPager(total, totalPages){
+  document.getElementById('pageInfo').textContent = `共 ${total} 条 · 第 ${PAGE}/${totalPages} 页`;
+  const win = new Set([1, totalPages, PAGE-2, PAGE-1, PAGE, PAGE+1, PAGE+2]
+    .filter(p => p >= 1 && p <= totalPages));
+  let html = '', prev = 0;
+  for(const p of [...win].sort((a,b)=>a-b)){
+    if(p - prev > 1) html += '<span class="muted">…</span>';
+    html += p === PAGE
+      ? `<button class="cur" disabled>${p}</button>`
+      : `<button class="ghost" onclick="gotoPage(${p})">${p}</button>`;
+    prev = p;
+  }
+  document.getElementById('pageNums').innerHTML = html;
+  document.getElementById('btnPrev').disabled = PAGE <= 1;
+  document.getElementById('btnNext').disabled = PAGE >= totalPages;
+}
+
+function gotoPage(p){
+  PAGE = p;
+  renderTable();
+  const box = document.querySelector('#resultCard .tablebox');
+  if(box) box.scrollTop = 0;
+}
+
+document.getElementById('perPage').value = String(PER_PAGE);
+document.getElementById('perPage').onchange = function(){
+  PER_PAGE = parseInt(this.value, 10);
+  localStorage.setItem('perPage', String(PER_PAGE));
+  PAGE = 1;
+  if(RESULT) renderTable();
+};
+document.getElementById('btnPrev').onclick = ()=>{ if(PAGE > 1) gotoPage(PAGE - 1); };
+document.getElementById('btnNext').onclick = ()=>{ if(RESULT) gotoPage(PAGE + 1); };
+
+document.querySelectorAll('.tabs button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    FILTER = b.dataset.f;
+    PAGE = 1;
+    renderTable();
+  };
+});
+document.getElementById('resOnly').onchange = function(){
+  RES_ONLY = this.checked;
+  PAGE = 1;
+  renderTable();
+};
+
+function exportItems(label, pred){
+  if(!RESULT) return;
+  const rows = [['RJ号','标题','社团','链接','发售日']];
+  RESULT.items.filter(pred)
+    .forEach(it=>rows.push([it.rj, it.title, it.maker, it.url, it.release_date||'']));
+  const csv = '﻿' + rows.map(r=>r.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'dlsite_' + label + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+document.getElementById('btnCsv').onclick = ()=>
+  exportItems('未下载', it=>it.status==='missing' && !it.ignored && !it.favorited);
+document.getElementById('btnCsvFav').onclick = ()=>
+  exportItems('收藏', it=>!!it.favorited && !it.ignored);
+document.getElementById('btnCsvIgn').onclick = ()=>
+  exportItems('忽略', it=>!!it.ignored);
+
+document.getElementById('btnCopy').onclick = async ()=>{
+  if(!RESULT) return;
+  const txt = RESULT.items.filter(it=>it.status==='missing' && !it.ignored && !it.favorited).map(it=>it.rj).join('\n');
+  await navigator.clipboard.writeText(txt);
+  alert('已复制 ' + txt.split('\n').filter(Boolean).length + ' 个 RJ 号');
+};
+
+// ---------------- 忽略与收藏管理 ----------------
+let MDATA = null;
+
+document.getElementById('btnManage').onclick = async ()=>{
+  const box = document.getElementById('manageBox');
+  const btn = document.getElementById('btnManage');
+  if(box.style.display === 'none' || !box.style.display){
+    await loadManage();
+    box.style.display = 'block';
+    btn.textContent = '收起管理';
+  }else{
+    box.style.display = 'none';
+    btn.textContent = '打开管理';
+  }
+};
+
+async function loadManage(){
+  MDATA = await api('/api/global_lists');
+  document.getElementById('mgIgnoredN').textContent = MDATA.ignored.length;
+  document.getElementById('mgMakersN').textContent = MDATA.ignored_makers.length;
+  document.getElementById('mgFavN').textContent = MDATA.favorites.length;
+  document.getElementById('mgIgnored').innerHTML = MDATA.ignored.map(x=>`<tr>
+    <td><input type="checkbox" class="mgchk-ignored" value="${esc(x.rj)}"></td>
+    <td>${esc(x.rj)}</td><td class="title-cell">${esc(x.title)}</td><td>${esc(x.maker)}</td>
+    <td><button class="small ghost" onclick="restoreOne('ignored','${x.rj}')">恢复</button></td>
+  </tr>`).join('') || '<tr><td colspan="5" class="muted" style="padding:14px;text-align:center">空</td></tr>';
+  document.getElementById('mgMakers').innerHTML = MDATA.ignored_makers.map(m=>`<tr>
+    <td><input type="checkbox" class="mgchk-ignored_makers" value="${esc(m)}"></td>
+    <td>${esc(m)}</td>
+    <td><button class="small ghost" onclick="restoreOne('ignored_makers','${ue(m)}')">恢复</button></td>
+  </tr>`).join('') || '<tr><td colspan="3" class="muted" style="padding:14px;text-align:center">空</td></tr>';
+  document.getElementById('mgFav').innerHTML = MDATA.favorites.map(x=>`<tr>
+    <td><input type="checkbox" class="mgchk-favorites" value="${esc(x.rj)}"></td>
+    <td>${esc(x.rj)}</td><td class="title-cell">${esc(x.title)}</td><td>${esc(x.maker)}</td>
+    <td><button class="small ghost" onclick="restoreOne('favorites','${x.rj}')">取消收藏</button></td>
+  </tr>`).join('') || '<tr><td colspan="5" class="muted" style="padding:14px;text-align:center">空</td></tr>';
+}
+
+function checkAll(box, type){
+  document.querySelectorAll('.mgchk-' + type).forEach(c=>c.checked = box.checked);
+}
+
+async function afterRestore(){
+  await loadManage();
+  await refreshState();
+  if(RESULT){ openRecord(RESULT.id); }
+}
+
+async function restoreOne(type, key){
+  if(type === 'ignored_makers') key = decodeURIComponent(key);
+  const r = await api('/api/restore_batch', {type, keys: [key]});
+  if(!r.ok){ alert(r.error || '操作失败'); return; }
+  afterRestore();
+}
+
+async function restoreChecked(type){
+  const keys = [...document.querySelectorAll('.mgchk-' + type + ':checked')].map(c=>c.value);
+  if(!keys.length){ alert('请先勾选要恢复的条目'); return; }
+  const r = await api('/api/restore_batch', {type, keys});
+  if(!r.ok){ alert(r.error || '操作失败'); return; }
+  afterRestore();
+}
+
+function exportList(type){
+  if(!MDATA) return;
+  let rows;
+  if(type === 'ignored_makers'){
+    rows = [['社团名'], ...MDATA.ignored_makers.map(m=>[m])];
+  }else{
+    const list = type === 'ignored' ? MDATA.ignored : MDATA.favorites;
+    rows = [['RJ号','标题','社团'], ...list.map(x=>[x.rj, x.title, x.maker])];
+  }
+  const csv = '﻿' + rows.map(r=>r.map(c=>'"'+String(c||'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  const names = {ignored:'已忽略作品', ignored_makers:'已忽略社团', favorites:'已收藏作品'};
+  a.download = 'dlsite_' + names[type] + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+refreshState();
+
+// ---------------- 本地库列表 ----------------
+let LIB = null, LIB_PAGE = 1, LIB_SORT_KEY = null, LIB_SORT_DIR = 1;
+let LIB_PER_PAGE = parseInt(localStorage.getItem('perPageLib') || String(PER_PAGE), 10);
+if(![20,30,40,50,100,500,1000].includes(LIB_PER_PAGE)) LIB_PER_PAGE = 20;
+
+async function loadLibrary(full){
+  const btn = document.getElementById('btnLibLoad');
+  btn.disabled = true; btn.textContent = full ? '联网补全中…' : '加载中…';
+  try{
+    LIB = await api('/api/local_library' + (full ? '?full=1' : ''));
+    document.getElementById('libBox').style.display = '';
+    document.getElementById('libPager').style.display = '';
+    document.getElementById('btnLibRefresh').style.display = '';
+    document.getElementById('libFilter').style.display = '';
+    document.getElementById('libRateFilter').style.display = '';
+    document.getElementById('btnLibImport').style.display = '';
+    LIB_PAGE = 1;
+    renderLib();
+  }catch(e){ alert('加载失败：' + e.message); }
+  btn.disabled = false; btn.textContent = '打开本地库';
+}
+
+function renderLib(){
+  if(!LIB) return;
+  const kw = document.getElementById('libFilter').value.trim().toLowerCase();
+  const rf = document.getElementById('libRateFilter').value;
+  let items = LIB.rows;
+  if(kw){
+    items = items.filter(it =>
+      it.rj.toLowerCase().includes(kw)
+      || (it.title || '').toLowerCase().includes(kw)
+      || (it.maker || '').toLowerCase().includes(kw));
+  }
+  if(rf === 'rated') items = items.filter(it => (it.rating || 0) > 0);
+  else if(rf === 'unrated') items = items.filter(it => !(it.rating || 0));
+  else if(rf === 'eq5') items = items.filter(it => (it.rating || 0) === 5);
+  else if(rf === 'lt3') items = items.filter(it => { const r = it.rating || 0; return r > 0 && r < 3; });
+  else if(rf && rf[0] === 't'){
+    // t<下限百分位>：4.5 分以上每 0.1 一档，以下每 0.5 一档；整数比较避免浮点误差
+    const b = parseInt(rf.slice(1), 10);
+    const w = b >= 450 ? 10 : 50;
+    items = items.filter(it => { const c = Math.round((it.rating || 0) * 100); return c >= b && c < b + w; });
+  }
+  else if(rf) { const b = parseFloat(rf); items = items.filter(it => { const r = it.rating || 0; return r >= b && r < b + 0.5; }); }
+  const filtered = kw || rf;
+  document.getElementById('libStat').style.display = 'inline-flex';
+  document.getElementById('libStat').textContent = filtered
+    ? `筛选出 ${items.length} / ${LIB.count} 部 · 扫描于 ${LIB.scanned_at}`
+    : `共 ${LIB.count} 部 · 扫描于 ${LIB.scanned_at}`;
+  if(LIB_SORT_KEY){
+    const k = LIB_SORT_KEY, d = LIB_SORT_DIR;
+    const val = it => k === 'rj' ? parseInt(it.rj.slice(2), 10) || 0 : k === 'rating' ? (it.rating || 0) : (it[k] || '');
+    items = [...items].sort((a, b)=>{
+      const va = val(a), vb = val(b);
+      if(typeof va === 'number' && typeof vb === 'number') return (va - vb) * d;
+      return String(va).localeCompare(String(vb), 'zh-Hans-CN', {numeric: true}) * d;
+    });
+  }
+  document.querySelectorAll('#libCard th.sortable').forEach(th=>{
+    if(!th.dataset.label) th.dataset.label = th.textContent;
+    th.textContent = th.dataset.label +
+      (LIB_SORT_KEY === th.dataset.k ? (LIB_SORT_DIR === 1 ? ' ↑' : ' ↓') : '');
+    th.title = LIB_SORT_KEY === th.dataset.k
+      ? (LIB_SORT_DIR === 1 ? '正序 · 点击改为倒序' : '倒序 · 点击恢复默认顺序')
+      : '点击排序';
+  });
+  const totalPages = Math.max(1, Math.ceil(items.length / LIB_PER_PAGE));
+  if(LIB_PAGE > totalPages) LIB_PAGE = totalPages;
+  if(LIB_PAGE < 1) LIB_PAGE = 1;
+  const slice = items.slice((LIB_PAGE-1)*LIB_PER_PAGE, LIB_PAGE*LIB_PER_PAGE);
+  document.getElementById('libTbody').innerHTML = slice.map(it=>{
+    const pathHtml = it.path
+      ? `<div class="muted" title="${esc(it.path)}" style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(it.path)}</div><div><button class="small ghost" style="margin-top:4px;padding:2px 8px;font-size:11px" title="在资源管理器中打开所在文件夹" onclick="openFolder(decodeURIComponent('${ue(it.path)}'))">打开文件夹</button></div>`
+      : '';
+    const r = it.rating || 0;
+    const starsHtml = r
+      ? `<span class="stars" title="${it.rating_manual ? '我的评级（手动打分，导入不会覆盖）' : 'DLsite 评分（再次导入会随官网更新）'}"><span class="ratenum">${Number(r).toFixed(2)}</span>${starsFillHtml(r)}</span>`
+      : '<span class="muted">未评价</span>';
+    const picker = `<div><button class="small ghost" style="margin-top:4px;padding:2px 8px;font-size:11px" title="给这部作品打分（0-5，两位小数）" onclick="toggleRate('${it.rj}')">评价</button></div>` +
+      `<div id="rate_${it.rj}" style="display:none;margin-top:2px;white-space:nowrap">` +
+      `<input type="number" id="ratein_${it.rj}" min="0" max="5" step="0.01" value="${r ? Number(r).toFixed(2) : ''}" placeholder="0-5" title="满分 5 分，保留两位小数；回车确定" style="width:56px;font-size:12px;padding:2px 4px" onkeydown="if(event.key==='Enter')setRateFromInput('${it.rj}')">` +
+      `<button class="small ghost" style="padding:2px 6px;font-size:11px" title="保存打分" onclick="setRateFromInput('${it.rj}')">确定</button>` +
+      `<button class="small ghost" style="padding:2px 6px;font-size:11px" title="清除评级（回到 DLsite 评分）" onclick="setRate('${it.rj}',0)">✕</button></div>`;
+    return `<tr>
+      <td>${esc(it.rj)}<button class="copybtn" title="复制 RJ 号" onclick="copyText('${it.rj}', this)">⧉</button>${picker}</td>
+      <td class="title-cell">${esc(it.title)}<button class="copybtn" title="复制标题" onclick="copyText(decodeURIComponent('${ue(it.title||'')}'), this)">⧉</button></td>
+      <td>${esc(it.maker)}</td>
+      <td class="muted" style="white-space:nowrap">${esc(it.release_date||'')}</td>
+      <td class="muted" style="white-space:nowrap">${esc(it.mtime||'')}</td>
+      <td>${starsHtml}</td>
+      <td><a href="${esc(it.url)}" target="_blank">打开</a></td>
+      <td>${pathHtml}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" class="muted" style="padding:20px;text-align:center">本地库为空</td></tr>';
+  // 分页
+  document.getElementById('libPageInfo').textContent = `共 ${items.length} 条 · 第 ${LIB_PAGE}/${totalPages} 页`;
+  const win = new Set([1, totalPages, LIB_PAGE-2, LIB_PAGE-1, LIB_PAGE, LIB_PAGE+1, LIB_PAGE+2]
+    .filter(p => p >= 1 && p <= totalPages));
+  let html = '', prev = 0;
+  for(const p of [...win].sort((a,b)=>a-b)){
+    if(p - prev > 1) html += '<span class="muted">…</span>';
+    html += p === LIB_PAGE
+      ? `<button class="cur" disabled>${p}</button>`
+      : `<button class="ghost" onclick="libGoto(${p})">${p}</button>`;
+    prev = p;
+  }
+  document.getElementById('libPageNums').innerHTML = html;
+  document.getElementById('libPrev').disabled = LIB_PAGE <= 1;
+  document.getElementById('libNext').disabled = LIB_PAGE >= totalPages;
+}
+
+function libGoto(p){
+  LIB_PAGE = p;
+  renderLib();
+  const box = document.querySelector('#libCard .tablebox');
+  if(box) box.scrollTop = 0;
+}
+
+function toggleRate(rj){
+  const el = document.getElementById('rate_' + rj);
+  if(el) el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+// 星星按百分比填充（和 DLsite 一样支持半星/任意小数）
+function starsFillHtml(r){
+  const pct = Math.max(0, Math.min(100, r / 5 * 100));
+  return `<span class="starswrap"><span>★★★★★</span><span class="fill" style="width:${pct}%">★★★★★</span></span>`;
+}
+
+function setRateFromInput(rj){
+  const inp = document.getElementById('ratein_' + rj);
+  if(!inp) return;
+  const v = parseFloat(inp.value);
+  if(isNaN(v) || v < 0 || v > 5){ alert('请输入 0 到 5 之间的分数（最多两位小数）'); return; }
+  setRate(rj, Math.round(v * 100) / 100);
+}
+
+async function setRate(rj, s){
+  let r;
+  try{
+    r = await api('/api/rate', {rj, rating: s});
+  }catch(e){
+    alert('保存失败：无法连接比对服务。请确认工具服务已启动（重新打开预览或双击 启动工具.bat）。');
+    return;
+  }
+  if(!r.ok){ alert(r.error || '保存失败'); return; }
+  const it = LIB && LIB.rows.find(x => x.rj === rj);
+  if(it){ it.rating = r.rating; it.rating_manual = r.rating > 0; }
+  renderLib();
+}
+
+document.getElementById('btnLibLoad').onclick = ()=>loadLibrary(false);
+document.getElementById('btnLibRefresh').onclick = ()=>loadLibrary(true);
+document.getElementById('btnLibImport').onclick = async function(){
+  if(!confirm('从 DLsite 获取/更新本地库作品的官方评分？\nDLsite 分数变化会同步更新；你手动打过分的作品不会被改动。')) return;
+  const btn = this;
+  btn.disabled = true; btn.textContent = '导入中…';
+  try{
+    const r = await api('/api/import_ratings', {});
+    if(!r.ok){ alert(r.error || '导入失败'); }
+    else{
+      alert(`导入完成：共 ${r.total} 部作品\n新导入 ${r.imported} 部 · 分数更新 ${r.updated} 部 · 沿用语言版本评分 ${r.inherited} 部\n保留手动评价 ${r.kept} 部 · 无评分 ${r.no_score} 部`);
+      await loadLibrary(false);
+    }
+  }catch(e){ alert('导入失败：无法连接比对服务，请确认服务已启动。'); }
+  btn.disabled = false; btn.textContent = '导入 DLsite 评分';
+};
+document.getElementById('libFilter').oninput = ()=>{ LIB_PAGE = 1; renderLib(); };
+document.getElementById('libRateFilter').value = localStorage.getItem('libRateFilter') || '';
+document.getElementById('libRateFilter').onchange = function(){
+  localStorage.setItem('libRateFilter', this.value);
+  LIB_PAGE = 1;
+  renderLib();
+};
+document.getElementById('libPerPage').value = String(LIB_PER_PAGE);
+document.getElementById('libPerPage').onchange = function(){
+  LIB_PER_PAGE = parseInt(this.value, 10);
+  localStorage.setItem('perPageLib', String(LIB_PER_PAGE));
+  LIB_PAGE = 1;
+  renderLib();
+};
+document.getElementById('libPrev').onclick = ()=>{ if(LIB_PAGE > 1) libGoto(LIB_PAGE - 1); };
+document.getElementById('libNext').onclick = ()=>{ if(LIB) libGoto(LIB_PAGE + 1); };
+document.querySelectorAll('#libCard th.sortable').forEach(th=>{
+  th.onclick = ()=>{
+    const k = th.dataset.k;
+    if(LIB_SORT_KEY !== k){ LIB_SORT_KEY = k; LIB_SORT_DIR = 1; }
+    else if(LIB_SORT_DIR === 1){ LIB_SORT_DIR = -1; }
+    else { LIB_SORT_KEY = null; LIB_SORT_DIR = 1; }
+    LIB_PAGE = 1;
+    renderLib();
+  };
+});
+document.getElementById('btnResBatch').onclick = async function(){
+  if(!RESULT) return;
+  const n = RESULT.items.filter(it=>!it.ignored && (it.favorited || it.status==='missing')).length;
+  if(!confirm(`批量检测本结果中未下载和收藏的 ${n} 部作品在三个资源站的情况？\n所有语言版本 RJ 都会查，耗时较长，可随时取消。`)) return;
+  const r = await api('/api/rescheck_batch', {id: RESULT.id});
+  if(!r.ok){ alert(r.error || '启动失败'); return; }
+  pollResJob();
+};
+document.getElementById('btnResCancel').onclick = async function(){
+  await api('/api/rescheck_cancel', {});
+};
+let resPollTimer = null;
+function pollResJob(){
+  const btn = document.getElementById('btnResBatch');
+  const cancelBtn = document.getElementById('btnResCancel');
+  btn.disabled = true;
+  cancelBtn.style.display = '';
+  if(resPollTimer) clearInterval(resPollTimer);
+  resPollTimer = setInterval(async ()=>{
+    try{
+      const j = await api('/api/resjob');
+      btn.textContent = j.message || '检测中…';
+      if(j.state !== 'running'){
+        clearInterval(resPollTimer);
+        resPollTimer = null;
+        btn.disabled = false; btn.textContent = '批量检测资源';
+        cancelBtn.style.display = 'none';
+        if(RESULT) await openRecord(RESULT.id);
+      }
+    }catch(e){ /* 网络抖动继续等 */ }
+  }, 1500);
+}
+</script>
+</body>
+</html>
